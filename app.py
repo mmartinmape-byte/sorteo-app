@@ -7,6 +7,7 @@ app = Flask(__name__)
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 USE_PG = bool(DATABASE_URL and 'postgres' in DATABASE_URL)
 ADMIN_KEY = os.environ.get('ADMIN_KEY', 'admin123')
+NUMERO_INICIAL = 123  # primer número que se asigna; los siguientes son correlativos
 
 
 # ── DB helpers ────────────────────────────────────────────────────────────────
@@ -112,7 +113,7 @@ def registrar():
     # Reintenta por si dos registros simultáneos calculan el mismo número
     for _ in range(5):
         r = q("SELECT COALESCE(MAX(numero), 0) + 1 AS n FROM participantes", fetch='one')
-        numero = r['n']
+        numero = max(r['n'], NUMERO_INICIAL)
         try:
             run("""INSERT INTO participantes (numero, nombre, apellido, telefono, email, creado)
                    VALUES (?, ?, ?, ?, ?, ?)""",
