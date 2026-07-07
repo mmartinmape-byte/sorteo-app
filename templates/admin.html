@@ -52,6 +52,11 @@
     padding: 2px 9px; font-weight: 700; display: inline-block;
   }
   .vacio { color: #aaa; text-align: center; padding: 24px; }
+  .btn-del {
+    background: none; border: none; cursor: pointer;
+    font-size: 1em; opacity: .45; padding: 2px 6px;
+  }
+  .btn-del:hover { opacity: 1; }
 </style>
 </head>
 <body>
@@ -101,15 +106,25 @@ async function cargar() {
   document.getElementById('statTotal').textContent = parts.length;
   document.getElementById('statSorteos').textContent = sorteos.length;
   document.getElementById('tablaParticipantes').innerHTML = tabla(
-    ['N°', 'Nombre', 'Apellido', 'Teléfono', 'Email', 'Registrado'],
+    ['N°', 'Nombre', 'Apellido', 'Teléfono', 'Email', 'Registrado', ''],
     parts,
-    p => `<tr><td><span class="num-badge">#${p.numero}</span></td><td>${p.nombre}</td><td>${p.apellido}</td><td>${p.telefono}</td><td>${p.email}</td><td>${p.creado}</td></tr>`
+    p => `<tr><td><span class="num-badge">#${p.numero}</span></td><td>${p.nombre}</td><td>${p.apellido}</td><td>${p.telefono}</td><td>${p.email}</td><td>${p.creado}</td><td><button class="btn-del" title="Eliminar" onclick="borrar('participantes', ${p.id}, '#${p.numero} ${p.nombre} ${p.apellido}')">🗑️</button></td></tr>`
   );
   document.getElementById('tablaSorteos').innerHTML = tabla(
-    ['Fecha', 'N° ganador', 'Ganador', 'Email'],
+    ['Fecha', 'N° ganador', 'Ganador', 'Email', ''],
     sorteos,
-    s => `<tr><td>${s.fecha}</td><td><span class="num-badge">#${s.numero_ganador}</span></td><td>${s.nombre} ${s.apellido}</td><td>${s.email}</td></tr>`
+    s => `<tr><td>${s.fecha}</td><td><span class="num-badge">#${s.numero_ganador}</span></td><td>${s.nombre} ${s.apellido}</td><td>${s.email}</td><td><button class="btn-del" title="Eliminar" onclick="borrar('sorteos', ${s.id}, 'el sorteo del ${s.fecha}')">🗑️</button></td></tr>`
   );
+}
+
+async function borrar(tipo, id, desc) {
+  const msg = tipo === 'participantes'
+    ? `¿Eliminar al participante ${desc}? Esta acción no se puede deshacer.`
+    : `¿Eliminar ${desc} del historial?`;
+  if (!confirm(msg)) return;
+  const res = await fetch(`/api/${tipo}/${id}?clave=` + encodeURIComponent(CLAVE), { method: 'DELETE' });
+  if (!res.ok) { alert('No se pudo eliminar'); return; }
+  cargar();
 }
 
 document.getElementById('btnSortear').addEventListener('click', async () => {

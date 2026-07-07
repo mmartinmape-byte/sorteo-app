@@ -165,6 +165,20 @@ def sorteos():
         return jsonify(error='No autorizado'), 401
     return jsonify(q("SELECT * FROM sorteos ORDER BY id DESC"))
 
+@app.route('/api/participantes/<int:pid>', methods=['DELETE'])
+def borrar_participante(pid):
+    if not check_admin():
+        return jsonify(error='No autorizado'), 401
+    run("DELETE FROM participantes WHERE id = ?", (pid,))
+    return jsonify(ok=True)
+
+@app.route('/api/sorteos/<int:sid>', methods=['DELETE'])
+def borrar_sorteo(sid):
+    if not check_admin():
+        return jsonify(error='No autorizado'), 401
+    run("DELETE FROM sorteos WHERE id = ?", (sid,))
+    return jsonify(ok=True)
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5002)
