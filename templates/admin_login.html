@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Sorteo</title>
+<style>
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f2f5; min-height: 100vh; margin: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card {
+    background: #fff; border-radius: 14px; padding: 32px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.1); text-align: center; width: 300px;
+  }
+  h2 { color: #16213e; margin: 0 0 16px; }
+  input {
+    width: 100%; padding: 11px; border: 2px solid #e0e0e0;
+    border-radius: 8px; font-size: 1em; box-sizing: border-box;
+  }
+  button {
+    width: 100%; margin-top: 14px; padding: 12px;
+    background: #0f3460; color: #fff; border: none;
+    border-radius: 8px; font-size: 1em; font-weight: 700; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>🔒 Acceso admin</h2>
+  <form onsubmit="event.preventDefault(); location.href='/admin?clave=' + encodeURIComponent(document.getElementById('clave').value);">
+    <input id="clave" type="password" placeholder="Clave de acceso" required>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+</body>
+</html>

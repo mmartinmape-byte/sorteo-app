@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro al Sorteo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    width: 100%;
+    max-width: 420px;
+    padding: 36px 30px;
+  }
+  h1 { font-size: 1.5em; color: #16213e; text-align: center; margin-bottom: 6px; }
+  .sub { text-align: center; color: #888; font-size: .9em; margin-bottom: 26px; }
+  label { display: block; font-size: .85em; font-weight: 600; color: #444; margin: 14px 0 5px; }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1em;
+    transition: border-color .2s;
+  }
+  input:focus { outline: none; border-color: #0f3460; }
+  button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: linear-gradient(135deg, #e94560, #c72c48);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(233,69,96,.4); }
+  button:disabled { opacity: .6; cursor: wait; transform: none; }
+  .error {
+    display: none;
+    background: #fdecea;
+    color: #b71c1c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 16px;
+    font-size: .9em;
+  }
+  /* Pantalla de éxito */
+  #exito { display: none; text-align: center; }
+  #exito .check { font-size: 3em; }
+  #exito h2 { color: #16213e; margin: 10px 0 4px; }
+  #exito p { color: #666; }
+  .numero-box {
+    margin: 22px auto;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    color: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    max-width: 240px;
+  }
+  .numero-box .lbl { font-size: .8em; letter-spacing: 2px; text-transform: uppercase; opacity: .7; }
+  .numero-box .num { font-size: 3.2em; font-weight: 800; line-height: 1.1; }
+  .aviso { font-size: .82em; color: #999; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="formulario">
+    <h1>🎟️ Registro al Sorteo</h1>
+    <p class="sub">Completá tus datos y recibí tu número</p>
+    <form id="form">
+      <label for="nombre">Nombre</label>
+      <input id="nombre" type="text" required maxlength="60" autocomplete="given-name">
+      <label for="apellido">Apellido</label>
+      <input id="apellido" type="text" required maxlength="60" autocomplete="family-name">
+      <label for="telefono">Número de contacto</label>
+      <input id="telefono" type="tel" required maxlength="20" autocomplete="tel" placeholder="Ej: 11 5555-5555">
+      <label for="email">Email</label>
+      <input id="email" type="email" required maxlength="120" autocomplete="email" placeholder="tu@email.com">
+      <div class="error" id="error"></div>
+      <button type="submit" id="btn">Participar</button>
+    </form>
+  </div>
+
+  <div id="exito">
+    <div class="check">✅</div>
+    <h2 id="exitoNombre"></h2>
+    <p>¡Ya estás participando del sorteo!</p>
+    <div class="numero-box">
+      <div class="lbl">Tu número</div>
+      <div class="num" id="exitoNumero"></div>
+    </div>
+    <p class="aviso">Guardá una captura de esta pantalla.<br>Si salís ganador te contactamos por teléfono o email.</p>
+  </div>
+</div>
+
+<script>
+document.getElementById('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('error');
+  err.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+  try {
+    const res = await fetch('/api/registrar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: document.getElementById('nombre').value,
+        apellido: document.getElementById('apellido').value,
+        telefono: document.getElementById('telefono').value,
+        email: document.getElementById('email').value,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al registrar');
+    document.getElementById('exitoNombre').textContent = `¡Listo, ${data.nombre}!`;
+    document.getElementById('exitoNumero').textContent = '#' + data.numero;
+    document.getElementById('formulario').style.display = 'none';
+    document.getElementById('exito').style.display = 'block';
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Participar';
+  }
+});
+</script>
+</body>
+</html>

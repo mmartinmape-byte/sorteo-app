@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Sorteo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { color: #16213e; margin-bottom: 4px; }
+  .sub { color: #888; margin-bottom: 20px; }
+  .stats { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat {
+    background: #fff; border-radius: 12px; padding: 16px 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); flex: 1; min-width: 140px;
+  }
+  .stat .n { font-size: 2em; font-weight: 800; color: #0f3460; }
+  .stat .l { font-size: .82em; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .panel {
+    background: #fff; border-radius: 12px; padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 20px;
+  }
+  .panel h2 { font-size: 1.1em; color: #16213e; margin-bottom: 14px; }
+  .btn-sortear {
+    background: linear-gradient(135deg, #e94560, #c72c48);
+    color: #fff; border: none; border-radius: 10px;
+    padding: 14px 28px; font-size: 1.1em; font-weight: 700; cursor: pointer;
+  }
+  .btn-sortear:hover { box-shadow: 0 6px 16px rgba(233,69,96,.4); }
+  .btn-sortear:disabled { opacity: .6; cursor: wait; }
+  .chk { margin-left: 16px; font-size: .9em; color: #555; }
+  #resultado { display: none; text-align: center; padding: 26px 10px 10px; }
+  #resultado .num {
+    font-size: 4em; font-weight: 800; color: #e94560;
+    animation: pop .5s ease;
+  }
+  #resultado .who { font-size: 1.3em; color: #16213e; margin-top: 6px; }
+  #resultado .contact { color: #777; margin-top: 4px; }
+  @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  table { width: 100%; border-collapse: collapse; font-size: .92em; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #eee; }
+  th { color: #888; font-size: .8em; text-transform: uppercase; letter-spacing: 1px; }
+  tr:hover td { background: #f8f9fb; }
+  .num-badge {
+    background: #0f3460; color: #fff; border-radius: 6px;
+    padding: 2px 9px; font-weight: 700; display: inline-block;
+  }
+  .vacio { color: #aaa; text-align: center; padding: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎰 Panel del Sorteo</h1>
+  <p class="sub">Participantes registrados e historial de sorteos</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="statTotal">–</div><div class="l">Participantes</div></div>
+    <div class="stat"><div class="n" id="statSorteos">–</div><div class="l">Sorteos realizados</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Realizar sorteo</h2>
+    <button class="btn-sortear" id="btnSortear">🎲 Sortear ganador</button>
+    <label class="chk"><input type="checkbox" id="excluir"> Excluir ganadores anteriores</label>
+    <div id="resultado">
+      <div class="num" id="resNum"></div>
+      <div class="who" id="resNombre"></div>
+      <div class="contact" id="resContacto"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Historial de sorteos</h2>
+    <div id="tablaSorteos"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Participantes</h2>
+    <div id="tablaParticipantes"></div>
+  </div>
+</div>
+
+<script>
+const CLAVE = "{{ clave }}";
+const api = (path) => fetch(path + '?clave=' + encodeURIComponent(CLAVE)).then(r => r.json());
+
+function tabla(cols, rows, render) {
+  if (!rows.length) return '<div class="vacio">Sin datos todavía</div>';
+  return '<table><thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') +
+    '</tr></thead><tbody>' + rows.map(render).join('') + '</tbody></table>';
+}
+
+async function cargar() {
+  const [parts, sorteos] = await Promise.all([api('/api/participantes'), api('/api/sorteos')]);
+  document.getElementById('statTotal').textContent = parts.length;
+  document.getElementById('statSorteos').textContent = sorteos.length;
+  document.getElementById('tablaParticipantes').innerHTML = tabla(
+    ['N°', 'Nombre', 'Apellido', 'Teléfono', 'Email', 'Registrado'],
+    parts,
+    p => `<tr><td><span class="num-badge">#${p.numero}</span></td><td>${p.nombre}</td><td>${p.apellido}</td><td>${p.telefono}</td><td>${p.email}</td><td>${p.creado}</td></tr>`
+  );
+  document.getElementById('tablaSorteos').innerHTML = tabla(
+    ['Fecha', 'N° ganador', 'Ganador', 'Email'],
+    sorteos,
+    s => `<tr><td>${s.fecha}</td><td><span class="num-badge">#${s.numero_ganador}</span></td><td>${s.nombre} ${s.apellido}</td><td>${s.email}</td></tr>`
+  );
+}
+
+document.getElementById('btnSortear').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSortear');
+  btn.disabled = true;
+  btn.textContent = '🎲 Sorteando...';
+  try {
+    const res = await fetch('/api/sortear?clave=' + encodeURIComponent(CLAVE), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ excluir_ganadores: document.getElementById('excluir').checked })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error');
+    document.getElementById('resNum').textContent = '#' + data.numero;
+    document.getElementById('resNombre').textContent = `🎉 ${data.nombre} ${data.apellido}`;
+    document.getElementById('resContacto').textContent = `${data.telefono} · ${data.email}`;
+    document.getElementById('resultado').style.display = 'block';
+    cargar();
+  } catch (ex) {
+    alert(ex.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🎲 Sortear ganador';
+  }
+});
+
+cargar();
+</script>
+</body>
+</html>
