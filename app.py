@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
 from datetime import datetime
 import os, re, random
 
@@ -165,6 +165,30 @@ def sorteos():
     if not check_admin():
         return jsonify(error='No autorizado'), 401
     return jsonify(q("SELECT * FROM sorteos ORDER BY id DESC"))
+
+@app.route('/api/exportar')
+def exportar():
+    if not check_admin():
+        return jsonify(error='No autorizado'), 401
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+    from io import BytesIO
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Participantes'
+    ws.append(['Número', 'Nombre', 'Apellido', 'Teléfono', 'Email', 'Registrado'])
+    for c in ws[1]:
+        c.font = Font(bold=True)
+    for p in q("SELECT * FROM participantes ORDER BY numero"):
+        ws.append([p['numero'], p['nombre'], p['apellido'], p['telefono'], p['email'], p['creado']])
+    for col, ancho in zip('ABCDEF', (10, 18, 18, 18, 32, 20)):
+        ws.column_dimensions[col].width = ancho
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    nombre = 'participantes_%s.xlsx' % datetime.now().strftime('%Y-%m-%d')
+    return send_file(buf, as_attachment=True, download_name=nombre,
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 @app.route('/api/participantes/<int:pid>', methods=['DELETE'])
 def borrar_participante(pid):

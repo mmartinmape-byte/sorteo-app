@@ -57,6 +57,13 @@
     font-size: 1em; opacity: .45; padding: 2px 6px;
   }
   .btn-del:hover { opacity: 1; }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .panel-head h2 { margin-bottom: 0; }
+  .btn-excel {
+    background: #1d6f42; color: #fff; text-decoration: none;
+    border-radius: 8px; padding: 8px 14px; font-size: .9em; font-weight: 600;
+  }
+  .btn-excel:hover { background: #175a35; }
 </style>
 </head>
 <body>
@@ -86,13 +93,17 @@
   </div>
 
   <div class="panel">
-    <h2>Participantes</h2>
+    <div class="panel-head">
+      <h2>Participantes</h2>
+      <a class="btn-excel" id="btnExcel" href="#">📥 Descargar Excel</a>
+    </div>
     <div id="tablaParticipantes"></div>
   </div>
 </div>
 
 <script>
 const CLAVE = "{{ clave }}";
+document.getElementById('btnExcel').href = '/api/exportar?clave=' + encodeURIComponent(CLAVE);
 const api = (path) => fetch(path + '?clave=' + encodeURIComponent(CLAVE)).then(r => r.json());
 
 function tabla(cols, rows, render) {
