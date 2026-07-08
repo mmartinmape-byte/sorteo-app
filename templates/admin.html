@@ -64,6 +64,19 @@
     border-radius: 8px; padding: 8px 14px; font-size: .9em; font-weight: 600;
   }
   .btn-excel:hover { background: #175a35; }
+  .fecha-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .fecha-row input {
+    flex: 1; min-width: 220px; padding: 11px 14px;
+    border: 2px solid #e0e0e0; border-radius: 8px; font-size: .95em;
+  }
+  .fecha-row input:focus { outline: none; border-color: #0f3460; }
+  .btn-guardar {
+    background: #0f3460; color: #fff; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: .95em; font-weight: 600; cursor: pointer;
+  }
+  .btn-guardar:hover { background: #16213e; }
+  .hint { font-size: .82em; color: #999; margin-top: 8px; }
+  #fechaOk { display: none; color: #1d6f42; font-weight: 600; font-size: .9em; }
 </style>
 </head>
 <body>
@@ -74,6 +87,16 @@
   <div class="stats">
     <div class="stat"><div class="n" id="statTotal">–</div><div class="l">Participantes</div></div>
     <div class="stat"><div class="n" id="statSorteos">–</div><div class="l">Sorteos realizados</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>📅 Fecha del sorteo</h2>
+    <div class="fecha-row">
+      <input id="inpFecha" type="text" maxlength="120" placeholder="Ej: sábado 15 de agosto a las 20hs">
+      <button class="btn-guardar" id="btnFecha">Guardar</button>
+      <span id="fechaOk">✓ Guardada</span>
+    </div>
+    <p class="hint">Se muestra a cada persona en la página de registro y junto a su número asignado. Dejala vacía para no mostrar nada.</p>
   </div>
 
   <div class="panel">
@@ -137,6 +160,22 @@ async function borrar(tipo, id, desc) {
   if (!res.ok) { alert('No se pudo eliminar'); return; }
   cargar();
 }
+
+fetch('/api/fecha-sorteo').then(r => r.json()).then(d => {
+  document.getElementById('inpFecha').value = d.fecha || '';
+});
+
+document.getElementById('btnFecha').addEventListener('click', async () => {
+  const res = await fetch('/api/fecha-sorteo?clave=' + encodeURIComponent(CLAVE), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fecha: document.getElementById('inpFecha').value })
+  });
+  if (!res.ok) { alert('No se pudo guardar'); return; }
+  const ok = document.getElementById('fechaOk');
+  ok.style.display = 'inline';
+  setTimeout(() => ok.style.display = 'none', 2500);
+});
 
 document.getElementById('btnSortear').addEventListener('click', async () => {
   const btn = document.getElementById('btnSortear');

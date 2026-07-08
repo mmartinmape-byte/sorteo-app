@@ -75,6 +75,29 @@
   .numero-box .lbl { font-size: .8em; letter-spacing: 2px; text-transform: uppercase; opacity: .7; }
   .numero-box .num { font-size: 3.2em; font-weight: 800; line-height: 1.1; }
   .aviso { font-size: .82em; color: #999; margin-top: 18px; }
+  .fecha-banner {
+    display: none;
+    background: #fff7e6;
+    color: #8a5a00;
+    border: 1px solid #ffe0a3;
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    font-size: .92em;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  #exitoFecha {
+    display: none;
+    background: #fff7e6;
+    color: #8a5a00;
+    border: 1px solid #ffe0a3;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: .95em;
+    font-weight: 600;
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
@@ -82,6 +105,7 @@
   <div id="formulario">
     <h1>🎟️ Registro al Sorteo</h1>
     <p class="sub">Completá tus datos y recibí tu número</p>
+    <div class="fecha-banner" id="fechaBanner"></div>
     <form id="form">
       <label for="nombre">Nombre</label>
       <input id="nombre" type="text" required maxlength="60" autocomplete="given-name">
@@ -104,11 +128,20 @@
       <div class="lbl">Tu número</div>
       <div class="num" id="exitoNumero"></div>
     </div>
+    <div id="exitoFecha"></div>
     <p class="aviso">Guardá una captura de esta pantalla.<br>Si salís ganador te contactamos por teléfono o email.</p>
   </div>
 </div>
 
 <script>
+fetch('/api/fecha-sorteo').then(r => r.json()).then(d => {
+  if (d.fecha) {
+    const b = document.getElementById('fechaBanner');
+    b.textContent = `📅 El sorteo se realiza el ${d.fecha}`;
+    b.style.display = 'block';
+  }
+}).catch(() => {});
+
 document.getElementById('form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btn');
@@ -131,6 +164,11 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(data.error || 'Error al registrar');
     document.getElementById('exitoNombre').textContent = `¡Listo, ${data.nombre}!`;
     document.getElementById('exitoNumero').textContent = '#' + data.numero;
+    if (data.fecha_sorteo) {
+      const ef = document.getElementById('exitoFecha');
+      ef.textContent = `📅 El sorteo se realiza el ${data.fecha_sorteo}`;
+      ef.style.display = 'block';
+    }
     document.getElementById('formulario').style.display = 'none';
     document.getElementById('exito').style.display = 'block';
   } catch (ex) {

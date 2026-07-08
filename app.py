@@ -70,6 +70,14 @@ def init_db():
         email TEXT NOT NULL,
         fecha TEXT NOT NULL
     )""")
+    run("""CREATE TABLE IF NOT EXISTS config (
+        clave TEXT PRIMARY KEY,
+        valor TEXT NOT NULL
+    )""")
+
+def get_fecha_sorteo():
+    r = q("SELECT valor FROM config WHERE clave = 'fecha_sorteo'", fetch='one')
+    return r['valor'] if r else ''
 
 init_db()
 
@@ -119,7 +127,8 @@ def registrar():
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 (numero, nombre, apellido, telefono, email,
                  datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            return jsonify(numero=numero, nombre=nombre, apellido=apellido)
+            return jsonify(numero=numero, nombre=nombre, apellido=apellido,
+                           fecha_sorteo=get_fecha_sorteo())
         except Exception as e:
             if 'email' in str(e).lower():
                 return jsonify(error='Este email ya está registrado'), 409
@@ -129,6 +138,18 @@ def registrar():
 
 def check_admin():
     return request.args.get('clave') == ADMIN_KEY
+
+@app.route('/api/fecha-sorteo', methods=['GET', 'POST'])
+def fecha_sorteo():
+    if request.method == 'GET':
+        return jsonify(fecha=get_fecha_sorteo())
+    if not check_admin():
+        return jsonify(error='No autorizado'), 401
+    fecha = ((request.get_json(silent=True) or {}).get('fecha') or '').strip()[:120]
+    run("DELETE FROM config WHERE clave = 'fecha_sorteo'")
+    if fecha:
+        run("INSERT INTO config (clave, valor) VALUES (?, ?)", ('fecha_sorteo', fecha))
+    return jsonify(ok=True, fecha=fecha)
 
 @app.route('/api/participantes')
 def participantes():
